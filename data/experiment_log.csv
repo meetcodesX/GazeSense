@@ -1,0 +1,2 @@
+Experiment_ID,Date,Dataset,Train_Participants,Validation_Participants,Test_Participants,Preprocessing,Model,Epochs,Result,Notes
+EXP001,2026-09-30,MPIIFaceGaze,"p00,p01,p04,p06,p07,p08","p09,p12","p13,p14","Participant-wise split; normalized gaze coordinates","Not started","","","Dataset preparation completed; p07 has 228 out-of-range coordinate records"
