@@ -1,21 +1,32 @@
-# Raw dataset
-data/Data/
-data/Data.zip
-
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
 
 # Virtual environments
-venv/
 .venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Model checkpoints and generated outputs
+outputs/
+*.pth
+*.pt
+*.ckpt
+
+# Dataset files
+data/gazefollow/images/
+data/gazefollow/annotations.csv
 
 # Jupyter
 .ipynb_checkpoints/
 
-# IDE
-.vscode/
-
-# OS files
+# OS / editor
 .DS_Store
 Thumbs.db
+.vscode/

@@ -1,0 +1,23 @@
+# Data processing
+numpy
+pandas
+scikit-learn
+
+# Image processing
+Pillow
+opencv-python
+
+# Deep learning
+torch
+torchvision
+
+# Dataset download
+huggingface_hub
+
+# Training utilities
+tqdm
+matplotlib
+
+# Jupyter / experimentation (optional but useful)
+jupyter
+ipykernel
