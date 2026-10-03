@@ -11,7 +11,6 @@ once, at the end, with the best checkpoint.
 """
 import argparse
 import csv
-import os
 import random
 import time
 from datetime import date
@@ -21,9 +20,8 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
 
-from src.data.gazefollow_spatial_dataset import GazeFollowSpatialDataset
+from src.data.gazefollow_cached import GPUBatcher, build_or_load_cache
 from src.models.gaze_spatial import GazeSpatialModel
 
 LOG_FIELDS = [
@@ -94,9 +92,9 @@ def evaluate(model, loader, device, variant, max_batches=0):
         logits = forward_batch(model, batch, device, variant).float()
         soft.append(model.soft_argmax(logits).cpu())
         hard.append(model.hard_argmax(logits).cpu())
-        tgt.append(batch["gaze_target"])
+        tgt.append(batch["gaze_target"].cpu())
         ids.append(batch["image_id"])
-        boxes.append(batch["head_bbox"])
+        boxes.append(batch["head_bbox"].cpu())
     soft, hard, tgt = torch.cat(soft), torch.cat(hard), torch.cat(tgt)
     ids, boxes = torch.cat(ids).numpy(), torch.cat(boxes).numpy().round(3)
 
@@ -141,7 +139,6 @@ def main():
     ap.add_argument("--weight-decay", type=float, default=1e-2)
     ap.add_argument("--coord-weight", type=float, default=10.0)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--workers", type=int, default=min(8, os.cpu_count() or 2))
     ap.add_argument("--no-pretrained", action="store_true")
     ap.add_argument("--root", default=None, help="project root (default: repo root)")
     ap.add_argument("--max-batches", type=int, default=0, help="smoke test: limit batches/epoch")
@@ -158,13 +155,8 @@ def main():
     print("Device:", device, "| run:", args.run_id, "| variant:", args.variant)
 
     def make_loader(name, train):
-        ds = GazeFollowSpatialDataset(split_dir / f"{name}.csv", root, train=train)
-        return DataLoader(
-            ds, batch_size=args.batch, shuffle=train,
-            num_workers=args.workers, pin_memory=device.type == "cuda",
-            persistent_workers=args.workers > 0,
-            drop_last=train and len(ds) > args.batch,
-        )
+        data = build_or_load_cache(name, root)
+        return GPUBatcher(data, device, batch_size=args.batch, train=train, seed=args.seed)
 
     train_loader = make_loader("train", True)
     val_loader = make_loader("val", False)
