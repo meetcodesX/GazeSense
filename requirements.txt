@@ -1,6 +1,7 @@
 # Data processing
 numpy
 pandas
+pyarrow
 scikit-learn
 
 # Image processing
