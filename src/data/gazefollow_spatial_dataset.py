@@ -48,9 +48,16 @@ class GazeFollowSpatialDataset(Dataset):
         heatmap_size=56,
         heatmap_sigma=2.0,
         crop_expand=0.2,
+        cache_max_side=512,
     ):
         self.df = pd.read_csv(csv_path).reset_index(drop=True)
         self.root = Path(project_root)
+        # Decoding full-size JPEGs for every annotation row is the main
+        # bottleneck, so each image is downscaled once (long side <= 512) and
+        # reused. Coordinates are normalized, so labels are unaffected.
+        self.paths = self._build_small_cache(cache_max_side) if cache_max_side else list(
+            self.df["image_path"]
+        )
         self.train = train
         self.S = image_size
         self.C = crop_size
@@ -63,6 +70,24 @@ class GazeFollowSpatialDataset(Dataset):
 
     def __len__(self):
         return len(self.df)
+
+    def _build_small_cache(self, max_side):
+        small_dir = self.root / "data" / "gazefollow" / "images_small"
+        small_dir.mkdir(parents=True, exist_ok=True)
+        mapping = {}
+        todo = [p for p in self.df["image_path"].unique()
+                if not (small_dir / Path(p).name).exists()]
+        if todo:
+            print(f"Caching {len(todo)} downscaled images to {small_dir} (one-time)...")
+        for p in todo:
+            with Image.open(self.root / p) as im:
+                im.draft("RGB", (max_side, max_side))  # fast JPEG downscale on decode
+                im = im.convert("RGB")
+                im.thumbnail((max_side, max_side))
+                im.save(small_dir / Path(p).name, quality=95)
+        for p in self.df["image_path"].unique():
+            mapping[p] = str(Path("data") / "gazefollow" / "images_small" / Path(p).name)
+        return [mapping[p] for p in self.df["image_path"]]
 
     def _crop_head(self, img, xmin, ymin, xmax, ymax):
         w, h = img.size
@@ -80,7 +105,7 @@ class GazeFollowSpatialDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        img = Image.open(self.root / row["image_path"]).convert("RGB")
+        img = Image.open(self.root / self.paths[idx]).convert("RGB")
 
         xmin, ymin = float(row["head_xmin"]), float(row["head_ymin"])
         xmax, ymax = float(row["head_xmax"]), float(row["head_ymax"])

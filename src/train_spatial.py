@@ -11,6 +11,7 @@ once, at the end, with the best checkpoint.
 """
 import argparse
 import csv
+import os
 import random
 import time
 from datetime import date
@@ -59,9 +60,12 @@ def forward_batch(model, batch, device, variant):
 def run_train_epoch(model, loader, optimizer, scaler, device, variant, coord_weight, max_batches):
     model.train()
     total, n = 0.0, 0
+    t0 = time.time()
     for i, batch in enumerate(loader):
         if max_batches and i >= max_batches:
             break
+        if i % 100 == 0:
+            print(f"  batch {i}/{len(loader)}  ({time.time() - t0:.0f}s)", flush=True)
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type, enabled=scaler is not None):
             logits = forward_batch(model, batch, device, variant)
@@ -137,7 +141,7 @@ def main():
     ap.add_argument("--weight-decay", type=float, default=1e-2)
     ap.add_argument("--coord-weight", type=float, default=10.0)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--workers", type=int, default=min(8, os.cpu_count() or 2))
     ap.add_argument("--no-pretrained", action="store_true")
     ap.add_argument("--root", default=None, help="project root (default: repo root)")
     ap.add_argument("--max-batches", type=int, default=0, help="smoke test: limit batches/epoch")
@@ -158,6 +162,7 @@ def main():
         return DataLoader(
             ds, batch_size=args.batch, shuffle=train,
             num_workers=args.workers, pin_memory=device.type == "cuda",
+            persistent_workers=args.workers > 0,
             drop_last=train and len(ds) > args.batch,
         )
 
