@@ -24,9 +24,10 @@ python -m src.evaluate
 | Constant guess (image center) | none | 0.317 | n/a | n/a |
 | BASE01 | 4-layer CNN, global avg pooling | 0.253 | n/a | 0.0404 |
 | E1A | ResNet18 scene + head mask, heatmap output | 0.211 | 0.137 | 0.0401 |
-| E1B | E1A + head-crop pathway | 0.187 | 0.114 | 0.0311 |
+| E1B | E1A + head-crop pathway | **0.1851 ± 0.0013** | **0.1130 ± 0.0013** | **0.0297 ± 0.0013** |
 
-- Single seed (42) per run. Seeds 1 and 2 for E1B are running; add "mean ± std over 3 seeds" here once they finish.
+- BASE01 and E1A are reported from a single seed (42). E1B was evaluated using three seeds (42, 123, 456).
+- E1B results are reported as mean ± sample standard deviation over 3 seeds.
 - Distance is computed per annotation row against normalized (x, y) in [0, 1]. This is not the standard GazeFollow protocol (which compares against the average of annotators), so these numbers are not comparable to published results.
 - E1A has a similar MSE to the baseline but a lower mean distance, because the heatmap model sometimes lands on a wrong region, which gives larger errors.
 - Training data is only 3,824 images (the HF copy contains just the GazeFollow test split, which we split by image into train/val/test).
