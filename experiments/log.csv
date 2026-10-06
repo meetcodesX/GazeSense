@@ -1,5 +1,4 @@
 run_id,date,model,lr,batch,epochs,seed,val_dist,test_mse,test_dist,test_min_dist,notes
-TEST,2026-10-03,ResNet18 two_pathway heatmap,0.0003,32,1,42,0.190645,0.032224,0.199083,0.124906,best ep 1
 E1B,2026-10-03,ResNet18 two_pathway heatmap,0.0003,32,30,42,0.173255,0.031125,0.186617,0.114406,best ep 30
 E1A,2026-10-03,ResNet18 scene_mask heatmap,0.0003,32,30,42,0.197723,0.040074,0.211103,0.136648,best ep 29
 E1B_seed123,2026-10-05,ResNet18 two_pathway heatmap,0.0003,32,30,123,0.170376,0.028704,0.184094,0.112907,best ep 12
